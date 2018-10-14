@@ -1,14 +1,4 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
-
-
-## Loading and preprocessing the data
-```{r}
-library(lattice)
+library(ggplot2)
 
 filename = "activity.zip"
 if(file.exists(filename)){
@@ -17,19 +7,12 @@ if(file.exists(filename)){
 
 dt <- read.csv("activity.csv", sep = ",", header = T)
 dt$date <- as.Date(as.character(dt$date), "%Y-%m-%d")
-```
 
-
-## What is mean total number of steps taken per day?
-```{r}
 sm <- tapply(dt$steps, dt$date, sum, na.rm = T)
 sm <- sm[sm!=0]
-```
 
-
-## What is the average daily activity pattern?
-```{r}
 hist(sm, main = "Number of steps per day", xlab = "Steps per day")
+
 mean(sm)
 median(sm)
 
@@ -39,10 +22,7 @@ plot(names(stepsbyinterval),stepsbyinterval, type = "l", main = "Average number 
 mx <- stepsbyinterval[which.max(stepsbyinterval)]
 names(mx)
 mx[[names(mx)]]
-```
 
-## Imputing missing values
-```{r}
 sum(is.na(dt$steps))
 
 newdt <- dt
@@ -53,15 +33,13 @@ for (idx in 1:nrow(newdt)){
 }
 imputedmean <- tapply(newdt$steps, newdt$date, sum, na.rm = T)
 hist(imputedmean, main = "Number of steps per day", xlab = "Steps per day")
+
 mean(imputedmean)
 median(imputedmean)
-```
-## Are there differences in activity patterns between weekdays and weekends?
-```{r}
-newdt$daytype[weekdays(newdt$date) %in% c("Saturday","Sunday")] <- "Weekend"
-newdt$daytype[!weekdays(newdt$date) %in% c("Saturday","Sunday")] <- "Weekday"
+
+newdt$daytype[, weekdays(newdt$date) %in% c("Saturday","Sunday")] <- "Weekend"
+newdt$daytype[, newdt$daytype != "Weekend"] <- "Weekday"
 newdt$daytype <- as.factor(newdt$daytype)
 
 imputeddata <- aggregate(steps ~ interval + daytype, newdt, mean)
-xyplot(steps ~ interval | daytype, data = imputeddata, type="l", layout=c(1,2), xlab="Interval", ylab="Sterps per day")
-```
+qplot(interval, steps, data = newdt, geom=c("line"), xlab = "Interval", ylab = "Number of steps") + facet_wrap(~ daytype, ncol=1)
